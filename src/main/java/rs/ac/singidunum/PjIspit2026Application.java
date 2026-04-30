@@ -9,5 +9,4 @@ public class PjIspit2026Application {
 	public static void main(String[] args) {
 		SpringApplication.run(PjIspit2026Application.class, args);
 	}
-
 }

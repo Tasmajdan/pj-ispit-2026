@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Izmeni u biblioteci</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="bg-black text-light">
+    <div class="container">
+
+        <nav class="navbar navbar-expand-lg mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/index.html">
+                    <i class="fa-solid fa-gamepad"></i> World of Games
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/index.html">
+                                <i class="fa-solid fa-house"></i> Početna
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/customer.html">
+                                <i class="fa-solid fa-user"></i> Korisnici
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/library.html">
+                                <i class="fa-solid fa-book"></i> Biblioteka
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="mb-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/index.html">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="/library.html">Biblioteka</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        Izmeni
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <h3>Izmeni igru u biblioteci</h3>
+
+        <form id="edit">
+            <div class="mb-3">
+                <label class="form-label">ID:</label>
+                <input type="number" id="id" class="form-control" disabled>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Korisnik:</label>
+                <select id="customer" class="form-select" disabled></select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Pretraži igru:</label>
+                <input type="text" id="searchGame" class="form-control" autocomplete="off">
+                <div id="gameResults" class="list-group mt-2"></div>
+            </div>
+
+            <input type="hidden" id="gameSlug">
+            <input type="hidden" id="gameName">
+            <input type="hidden" id="backgroundImage">
+
+            <div class="mb-3">
+                <label class="form-label">Status:</label>
+                <select id="status" class="form-select">
+                    <option value="want">Želim da igram</option>
+                    <option value="playing">Trenutno igram</option>
+                    <option value="played">Odigrao sam</option>
+                </select>
+            </div>
+
+            <div class="mb-3" id="ratingDiv">
+                <label class="form-label">Ocena (1-10):</label>
+                <input type="number" id="ratingInput" min="1" max="10" class="form-control">
+            </div>
+
+            <div class="mb-3" id="notesDiv">
+                <label class="form-label">Napomene:</label>
+                <textarea id="notesInput" rows="3" class="form-control"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                <i class="fa-solid fa-floppy-disk"></i> Sačuvaj
+            </button>
+        </form>
+
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+const params = new URLSearchParams(location.search)
+const id = params.get('id')
+
+if (!id || id == '') {
+    window.location.href = '/library.html'
+} else {
+
+    const statusSelect = document.getElementById('status')
+    const ratingInput = document.getElementById('ratingInput')
+    const notesInput = document.getElementById('notesInput')
+    const ratingDiv = document.getElementById('ratingDiv')
+    const notesDiv = document.getElementById('notesDiv')
+
+    function toggleFields() {
+        if (statusSelect.value === 'want') {
+            ratingInput.disabled = true
+            notesInput.disabled = true
+            ratingDiv.hidden = true
+            notesDiv.hidden = true
+            ratingInput.value = ''
+            notesInput.value = ''
+        } else {
+            ratingInput.disabled = false
+            notesInput.disabled = false
+            ratingDiv.hidden = false
+            notesDiv.hidden = false
+        }
+    }
+    statusSelect.addEventListener('change', toggleFields)
+
+    const searchInput = document.getElementById('searchGame')
+    const resultsDiv = document.getElementById('gameResults')
+
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim()
+        if (query.length < 2) {
+            resultsDiv.innerHTML = ''
+            return
+        }
+
+        axios.get(`https://api.rawg.io/api/games?key=162f8d5be4a6451d815338a76abe5482&search=${query}&page_size=10`)
+            .then(rsp => {
+                resultsDiv.innerHTML = ''
+                rsp.data.results.forEach(game => {
+                    const item = document.createElement('a')
+                    item.href = "#"
+                    item.classList = "list-group-item list-group-item-action text-dark"
+                    item.innerHTML = `
+                        <img src="${game.background_image}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:10px;">
+                        ${game.name}
+                    `
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault()
+                        document.getElementById('gameSlug').value = game.slug
+                        document.getElementById('gameName').value = game.name
+                        document.getElementById('backgroundImage').value = game.background_image
+                        searchInput.value = game.name
+                        resultsDiv.innerHTML = ''
+                    })
+                    resultsDiv.appendChild(item)
+                })
+            })
+    })
+
+    axios.get('/api/customer').then(custRsp => {
+        
+        const select = document.getElementById('customer')
+        custRsp.data.forEach(c => {
+            const opt = document.createElement('option')
+            opt.value = c.id
+            opt.innerText = `${c.firstName} ${c.lastName}`
+            select.appendChild(opt)
+        })
+
+        axios.get('/api/library/' + id).then(rsp => {
+
+            const idInput = document.getElementById('id')
+            idInput.value = rsp.data.id
+
+            const customerInput = document.getElementById('customer')
+            customerInput.value = rsp.data.customer.id 
+
+            document.getElementById('gameSlug').value = rsp.data.gameSlug
+            document.getElementById('gameName').value = rsp.data.gameName
+            document.getElementById('backgroundImage').value = rsp.data.backgroundImage
+            document.getElementById('searchGame').value = rsp.data.gameName
+            
+            const statusInput = document.getElementById('status')
+            statusInput.value = rsp.data.status
+
+            document.getElementById('ratingInput').value = rsp.data.userRating ?? ''
+            document.getElementById('notesInput').value = rsp.data.notes ?? ''
+
+            toggleFields() 
+            
+            document.getElementById('edit').addEventListener('submit', (e) => {
+                e.preventDefault()
+
+                const rating = document.getElementById('ratingInput').value
+
+                axios.request({
+                    url: `/api/library/${rsp.data.id}`,
+                    method: 'put',
+                    data: {
+                        customerId: Number(document.getElementById('customer').value),
+                        gameSlug: document.getElementById('gameSlug').value,
+                        gameName: document.getElementById('gameName').value,    
+                        backgroundImage: document.getElementById('backgroundImage').value,
+                        userRating: rating === '' ? null : parseInt(rating),
+                        status: document.getElementById('status').value,
+                        notes: document.getElementById('notesInput').value
+                    }
+                }).then(() => {
+                    window.location.href = '/library.html'
+                })
+            })
+
+        })
+    })
+
+}
+</script>
+
+</body>
+</html>
